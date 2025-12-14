@@ -1,0 +1,5 @@
+{
+  "name": "Professor Dashboard",
+  "description": "A premium dashboard for professors to manage classes, view content, and interact with students via a Google Sheets backend.",
+  "requestFramePermissions": []
+}

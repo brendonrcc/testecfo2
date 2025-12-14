@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Professor Dashboard</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Babel Standalone -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- ES Module Shims -->
+    <script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+              brand: {
+                DEFAULT: '#528c16',
+                hover: '#437312',
+                light: '#eef5e6',
+                subtle: '#9bbd7c',
+              },
+              dark: {
+                bg: '#0f1115',      
+                surface: '#16181d', 
+                element: '#1f2229', 
+                hover: '#2a2d36',   
+              }
+            },
+            boxShadow: {
+              'none': 'none',
+            }
+          }
+        }
+      }
+    </script>
+    
+    <script type="importmap-shim">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client?external=react",
+        "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react",
+        "uuid": "https://esm.sh/uuid@9.0.1"
+      }
+    }
+    </script>
+    <style>
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow-x: hidden;
+      }
+      #root {
+        font-family: 'Inter', sans-serif;
+        line-height: 1.5;
+        width: 100%;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent; 
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1; 
+        border-radius: 10px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #333; 
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8; 
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.4s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root" class="bg-[#f2f4f7] dark:bg-dark-bg text-slate-800 dark:text-slate-200 font-sans antialiased selection:bg-brand selection:text-white transition-colors duration-300 w-full min-h-screen">
+        <!-- Loader inicial (Será substituído pelo React) -->
+        <div class="fixed inset-0 flex flex-col items-center justify-center gap-3 opacity-50 animate-pulse bg-[#f2f4f7] dark:bg-dark-bg z-50">
+            <svg class="animate-spin h-8 w-8 text-slate-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="text-sm font-medium text-slate-500">Carregando sistema...</span>
+        </div>
+    </div>
+    
+    <!-- Aplicação Unificada -->
+    <script type="text/babel" data-type="module" data-presets="typescript,react">
+      import React, { useState, useEffect, useMemo, useCallback } from 'react';
+      import { createRoot } from 'react-dom/client';
+      import { 
+        LogIn, ShieldCheck, BookOpen, Target, Loader2, Sun, Moon, X, ArrowLeft, ChevronRight, Send, 
+        Home, LogOut, Folder, ChevronDown, ChevronUp, FileText, ClipboardList, Search, PenTool, Book, 
+        Scale, Gavel, ShieldAlert, LayoutDashboard, ArrowRight, Copy, Check, Calculator, ToggleLeft, 
+        ToggleRight, FileCheck, CheckCircle, XCircle, Filter, ArrowUpDown, Clock, CalendarDays, 
+        AlertCircle, AlertTriangle, CheckCircle2, Eraser, Code, MessageSquare, Globe, SendHorizontal, 
+        Info, MessageCircle, HelpCircle, Menu
+      } from 'lucide-react';
+
+      // --- CONSTANTS & TYPES ---
+      const SHEET_ID = "11A7T6hsWiiGX0it2lrjPrp4r2j4I65wj-IOfLGi8tQg";
+      const AUTH_GID = "1512246214";
+      const HISTORY_GID = "552818815";
+
+      const CLASSES = [
+        { id: 'admin', name: 'Administração e Tecnologia do Fórum', gid: '0', description: 'Gestão administrativa e protocolos.' },
+        { id: 'mil_sci', name: 'Ciências Militares', gid: '971998757', description: 'Táticas, estratégias e estudos de campo.' },
+        { id: 'mil_career', name: 'Carreira Militar', gid: '303472444', description: 'Guia de progressão e hierarquia.' },
+        { id: 'practice', name: 'Práticas Militares e Legislação', gid: '1700831677', description: 'Treinamentos práticos e simulações.' },
+      ];
+
+      // --- SERVICES ---
+      const parseCSVLine = (text) => {
+        const result = [];
+        let start = 0;
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+          if (text[i] === '"') {
+            inQuotes = !inQuotes;
+          } else if (text[i] === ',' && !inQuotes) {
+            let field = text.substring(start, i);
+            if (field.startsWith('"') && field.endsWith('"')) {
+              field = field.substring(1, field.length - 1).replace(/""/g, '"');
+            }
+            result.push(field.trim());
+            start = i + 1;
+          }
+        }
+        let lastField = text.substring(start);
+        if (lastField.startsWith('"') && lastField.endsWith('"')) {
+          lastField = lastField.substring(1, lastField.length - 1).replace(/""/g, '"');
+        }
+        result.push(lastField.trim());
+        return result;
+      };
+
+      const fetchCSV = async (gid) => {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${gid}`;
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch data from Google Sheets');
+        }
+        const text = await response.text();
+        const lines = text.split(/\r?\n/);
+        return lines.map(parseCSVLine);
+      };
+
+      const loginUser = async (nickname) => {
+        try {
+          const rows = await fetchCSV(AUTH_GID);
+          const normalizedNick = nickname.toLowerCase().trim();
+          
+          for (const row of rows) {
+            if (row.length < 2) continue;
+            const role = row[0];
+            const name = row[1];
+            
+            if (name.toLowerCase().trim() === normalizedNick) {
+              return { nickname: name, role: role };
+            }
+          }
+          return null;
+        } catch (error) {
+          console.error("Login Error:", error);
+          throw error;
+        }
+      };
+
+      const fetchClassContent = async (gid) => {
+        try {
+          const rows = await fetchCSV(gid);
+          return rows.map(row => ({
+            tag: row[0]?.toLowerCase().trim() || '',
+            content: row[1] || ''
+          })).filter(r => r.tag !== '');
+        } catch (error) {
+          console.error("Content Fetch Error:", error);
+          throw error;
+        }
+      };
+
+      const fetchClassHistory = async () => {
+        try {
+          const rows = await fetchCSV(HISTORY_GID);
+          return rows.slice(1).map(row => ({
+            endTime: row[0] || '',
+            startTime: row[1] || '',
+            className: row[2] || '',
+            professor: row[3] || '',
+            students: row[4] || '',
+            verdict: row[5] || '',
+            score: row[7] || '', 
+            adminActivity: row[8] || '' 
+          })).filter(entry => entry.className !== ''); 
+        } catch (error) {
+          console.error("History Fetch Error:", error);
+          throw error;
+        }
+      };
+
+      // --- HELPERS ---
+      const generateId = () => Math.random().toString(36).substr(2, 9);
+
+      const parseRowsToBlocks = (rows) => {
+        let i = 0;
+
+        const parseLevel = (untilTags = [], parentId) => {
+          const currentBlocks = [];
+
+          while (i < rows.length) {
+            const row = rows[i];
+            const tag = row.tag.toLowerCase();
+
+            if (untilTags.includes(tag)) {
+              return currentBlocks;
+            }
+
+            const currentId = generateId();
+
+            if (tag === 's1') {
+              i++; 
+              const children = parseLevel(['s2'], currentId);
+              currentBlocks.push({
+                id: currentId,
+                parentId: parentId,
+                type: 'group',
+                tag: 's1',
+                content: row.content,
+                children,
+                level: 1
+              });
+              i++; 
+            } else if (tag === 's3') {
+              i++; 
+              const children = parseLevel(['s4'], currentId);
+              currentBlocks.push({
+                id: currentId,
+                parentId: parentId,
+                type: 'group',
+                tag: 's3',
+                content: row.content,
+                children,
+                level: 2
+              });
+              i++; 
+            } else if (tag === 's2' || tag === 's4') {
+              return currentBlocks;
+            } else {
+              currentBlocks.push({
+                id: currentId,
+                parentId: parentId,
+                type: 'leaf',
+                tag: tag,
+                content: row.content
+              });
+              i++;
+            }
+          }
+          return currentBlocks;
+        };
+
+        return parseLevel();
+      };
+
+      // --- COMPONENTS ---
+
+      // NAVBAR
+      const Navbar = ({ user, onMenuClick, onLogout, title }) => {
+        const getHabboAvatar = (nickname) => 
+            `https://www.habbo.com.br/habbo-imaging/avatarimage?user=${nickname}&direction=3&head_direction=3&gesture=sml&size=m&headonly=1`;
+
+        return (
+            <header className="h-20 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-md shadow-sm sticky top-0 z-[900] px-4 lg:px-8 flex items-center justify-between transition-all duration-300 border-b border-slate-200/50 dark:border-white/5 w-full">
+            <div className="flex items-center gap-4">
+                <button 
+                onClick={onMenuClick}
+                className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-dark-hover rounded-xl transition-colors"
+                >
+                <Menu size={24} />
+                </button>
+                
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white tracking-tight">
+                {title}
+                </h2>
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-6">
+                {user && (
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 pl-2 cursor-pointer hover:opacity-80 transition-opacity">
+                    <div className="text-right hidden xl:block">
+                        <p className="text-sm font-bold text-slate-800 dark:text-white leading-tight">
+                        {user.nickname}
+                        </p>
+                        <p className="text-[10px] text-brand font-bold uppercase tracking-wide leading-tight mt-0.5">
+                        {user.role}
+                        </p>
+                    </div>
+                    <div className="w-10 h-10 bg-slate-100 dark:bg-dark-element rounded-full overflow-hidden flex items-center justify-center relative shadow-sm border border-slate-200 dark:border-slate-700">
+                        <img 
+                        src={getHabboAvatar(user.nickname)} 
+                        alt={user.nickname} 
+                        className="w-full h-full object-cover -mt-2 scale-125"
+                        onError={(e) => {
+                            e.target.style.display = 'none';
+                        }}
+                        />
+                    </div>
+                    </div>
+                </div>
+                )}
+            </div>
+            </header>
+        );
+      };
+
+      // CONTENT RENDERER
+      const CopyableText = ({ block, status, onInteract }) => {
+        const [copied, setCopied] = useState(false);
+        const isTitle = block.tag === 'title';
+        const isQuestion = block.tag === 'p';
+
+        const handleInteraction = (e) => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(block.content || '');
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            onInteract(block.id);
+        };
+
+        if (isTitle) {
+            return (
+            <div className={`flex items-start justify-between py-4 mb-2 gap-4 rounded-lg -mx-3 px-3 transition-colors ${status.isSkipped ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400' : 'hover:bg-slate-50 dark:hover:bg-dark-hover text-slate-700 dark:text-slate-200'}`}>
+                <div className="flex flex-col gap-1 w-full">
+                {status.isSkipped && (
+                    <span className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1">
+                    <AlertTriangle size={10} /> Não copiado
+                    </span>
+                )}
+                <h3 className={`font-bold text-xl leading-tight ${status.isSkipped ? 'text-red-700 dark:text-red-400' : 'text-slate-800 dark:text-white'}`}>
+                    {block.content}
+                </h3>
+                </div>
+                <button onClick={handleInteraction} className="flex-shrink-0 text-slate-400 hover:text-brand transition-colors p-2 rounded-lg" title="Copiar Título">
+                {copied ? <Check size={20} className="text-brand" /> : <Copy size={20} />}
+                </button>
+            </div>
+            );
+        }
+
+        if (isQuestion) {
+            return (
+            <div onClick={handleInteraction} className={`relative rounded-xl mb-4 border transition-colors cursor-pointer group select-none ${status.isSkipped ? 'bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30' : 'bg-indigo-50/30 border-indigo-100 hover:bg-indigo-50/50 dark:bg-indigo-500/5 dark:border-indigo-500/20 dark:hover:bg-indigo-500/10'}`}>
+                <div className="p-4 flex items-start gap-4">
+                    <div className="shrink-0">
+                        <div className={`p-2 rounded-lg ${status.isSkipped ? 'bg-red-100 text-red-500 dark:bg-red-900/30' : 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400'}`}>
+                            <HelpCircle size={18} strokeWidth={2.5} />
+                        </div>
+                    </div>
+                    <div className="flex-1 min-w-0 flex flex-col gap-1.5 pt-0.5">
+                        <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold uppercase tracking-widest ${status.isSkipped ? 'text-red-500' : 'text-indigo-500 dark:text-indigo-400'}`}>
+                                {status.isSkipped ? 'Pulo Detectado' : 'Questão'}
+                            </span>
+                        </div>
+                        <p className={`text-[15px] font-medium leading-relaxed break-words ${status.isSkipped ? 'text-red-700 dark:text-red-300' : 'text-slate-700 dark:text-slate-200'}`}>
+                            {block.content}
+                        </p>
+                    </div>
+                    <button className={`shrink-0 p-2 rounded-lg transition-all self-start ${copied ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' : 'text-slate-300 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-indigo-400'}`}>
+                        {copied ? <Check size={18} strokeWidth={3} /> : <Copy size={18} />}
+                    </button>
+                </div>
+            </div>
+            );
+        }
+
+        return (
+            <div className={`flex items-start justify-between py-2 mb-1 gap-4 group rounded-lg -mx-2 px-2 transition-colors cursor-pointer ${status.isSkipped ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400' : 'hover:bg-slate-50 dark:hover:bg-dark-hover text-slate-700 dark:text-slate-200'}`} onClick={handleInteraction}>
+            <div className="w-full flex items-start gap-3">
+                <div className="flex flex-col w-full">
+                    {status.isSkipped && (
+                    <span className="text-[10px] font-bold text-red-500 uppercase flex items-center gap-1 mb-1">
+                        <AlertTriangle size={10} /> Pulo detectado
+                    </span>
+                    )}
+                    <div className="font-sans text-[15px] leading-relaxed whitespace-pre-wrap break-words font-medium">
+                    {block.content}
+                    </div>
+                </div>
+            </div>
+            <button className={`flex-shrink-0 transition-all p-1.5 rounded-lg ${copied ? 'text-brand' : status.isSkipped ? 'text-red-400' : 'text-slate-300 dark:text-slate-600 group-hover:text-brand'}`} title="Copiar Linha">
+                {copied ? <Check size={16} /> : <Copy size={16} />}
+            </button>
+            </div>
+        );
+      };
+
+      const PrivateMessage = ({ block, status, onInteract }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        const [nickname, setNickname] = useState('');
+        const [sendState, setSendState] = useState('idle');
+
+        const handleSend = () => {
+            if (!nickname.trim()) return;
+            setSendState('sending');
+            onInteract(block.id);
+            setTimeout(() => {
+                setSendState('sent');
+                setTimeout(() => {
+                    setIsOpen(false);
+                    setSendState('idle');
+                    setNickname('');
+                }, 1500);
+            }, 800);
+        };
+
+        if (!isOpen) {
+            return (
+            <div className="py-2 mb-2">
+                <button onClick={() => setIsOpen(true)} className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-medium text-sm border ${status.isSkipped ? 'bg-red-50 border-red-100 text-red-500 hover:bg-red-100' : 'bg-slate-50 border-slate-200 dark:bg-dark-element dark:border-dark-hover text-slate-600 hover:bg-slate-100 dark:hover:bg-dark-hover dark:text-slate-300'}`}>
+                {status.isSkipped && <AlertTriangle size={16} />}
+                <MessageSquare size={16} />
+                {status.isSkipped ? 'Enviar MP (Anterior pulada)' : 'Enviar MP'}
+                </button>
+            </div>
+            );
+        }
+
+        return (
+            <div className="my-2 p-4 bg-brand/5 dark:bg-brand/10 rounded-xl animate-fade-in border border-brand/10">
+            <div className="flex items-center gap-2 mb-2 text-xs font-bold text-brand uppercase tracking-wider">
+                <MessageSquare size={14} />
+                Destinatário
+            </div>
+            <div className="flex gap-2">
+                <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSend()} placeholder="Nickname..." className="flex-grow px-4 py-2 text-sm bg-white dark:bg-dark-element rounded-lg focus:outline-none focus:ring-2 focus:ring-brand text-slate-800 dark:text-white border border-slate-200 dark:border-slate-700" autoFocus />
+                <button onClick={handleSend} disabled={!nickname.trim() || sendState !== 'idle'} className="flex items-center justify-center w-10 h-10 bg-brand text-white rounded-lg hover:bg-brand-hover disabled:opacity-50">
+                {sendState === 'sent' ? <Check size={18} /> : <SendHorizontal size={18} />}
+                </button>
+            </div>
+            </div>
+        );
+      };
+
+      const Spoiler = ({ block, childrenNodes }) => {
+        const [isOpen, setIsOpen] = useState(false);
+        const isOuter = block.level === 1;
+        const title = block.content && block.content.trim() !== '' ? block.content : (isOuter ? 'Conteúdo Expandível' : 'Detalhes');
+
+        return (
+            <div className={`my-3 rounded-xl overflow-hidden transition-all duration-300 border ${isOuter ? 'bg-slate-50 dark:bg-dark-element border-slate-200 dark:border-white/5' : 'bg-white/50 dark:bg-dark-surface ml-4 border-slate-100 dark:border-white/5'}`}>
+            <button onClick={() => setIsOpen(!isOpen)} className={`w-full flex items-center justify-between p-4 text-left transition-colors ${isOpen ? 'bg-slate-100 dark:bg-dark-hover' : 'hover:bg-slate-100 dark:hover:bg-dark-hover'}`}>
+                <span className={`font-bold ${isOuter ? 'text-slate-800 dark:text-slate-200 text-base' : 'text-slate-700 dark:text-slate-300 text-sm'}`}>{title}</span>
+                <span className={`transition-transform duration-300 text-slate-400 dark:text-slate-500 ${isOpen ? 'rotate-180 text-brand' : ''}`}><ChevronDown size={20} /></span>
+            </button>
+            {isOpen && <div className={`p-4 animate-fade-in`}>{childrenNodes}</div>}
+            </div>
+        );
+      };
+
+      const ContentRenderer = ({ blocks }) => {
+        const processBlocks = (blocks) => {
+            const nodeMap = new Map();
+            const sequence = [];
+            const traverse = (nodes) => {
+                nodes.forEach(node => {
+                    nodeMap.set(node.id, node);
+                    if (node.type === 'leaf' && ['line', 'title', 'mp', 'p'].includes(node.tag || '')) {
+                        sequence.push(node.id);
+                    }
+                    if (node.children) traverse(node.children);
+                });
+            };
+            traverse(blocks);
+            return { nodeMap, sequence };
+        };
+
+        const { nodeMap, sequence } = useMemo(() => processBlocks(blocks), [blocks]);
+        const [clickedIds, setClickedIds] = useState(new Set());
+
+        const skippedIds = useMemo(() => {
+            if (clickedIds.size === 0) return new Set();
+            const skipped = new Set();
+            let maxIndex = -1;
+            sequence.forEach((id, idx) => { if (clickedIds.has(id)) maxIndex = idx; });
+            if (maxIndex === -1) return skipped;
+
+            for (let i = 0; i < maxIndex; i++) {
+                const candidateId = sequence[i];
+                if (clickedIds.has(candidateId)) continue;
+                let nextClickedId = null;
+                for (let j = i + 1; j <= maxIndex; j++) {
+                    if (clickedIds.has(sequence[j])) {
+                        nextClickedId = sequence[j];
+                        break;
+                    }
+                }
+                if (!nextClickedId) { skipped.add(candidateId); continue; }
+                const candidateNode = nodeMap.get(candidateId);
+                const clickedNode = nodeMap.get(nextClickedId);
+                if (!candidateNode || !clickedNode) continue;
+                skipped.add(candidateId);
+            }
+            return skipped;
+        }, [clickedIds, sequence, nodeMap]);
+
+        const handleInteract = useCallback((id) => {
+            setClickedIds(prev => { const next = new Set(prev); next.add(id); return next; });
+        }, []);
+
+        const renderBlock = (block) => {
+            const status = { isClicked: clickedIds.has(block.id), isSkipped: skippedIds.has(block.id) };
+            switch (block.tag) {
+                case 'title':
+                case 'line':
+                case 'p': return <CopyableText key={block.id} block={block} status={status} onInteract={handleInteract} />;
+                case 'mp': return <PrivateMessage key={block.id} block={block} status={status} onInteract={handleInteract} />;
+                case 'att': return <div className="flex gap-2.5 py-2 my-1 px-1 opacity-80 hover:opacity-100 transition-opacity"><Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-400 dark:text-slate-500" /><span className="text-xs text-slate-500 dark:text-slate-400 font-medium leading-relaxed">{block.content}</span></div>;
+                case 'rep': return <div className="flex gap-4 py-4 my-3 px-4 bg-yellow-50 dark:bg-yellow-900/10 rounded-xl border border-yellow-100 dark:border-yellow-900/20"><MessageCircle className="w-5 h-5 mt-0.5 flex-shrink-0 text-yellow-600 dark:text-yellow-500" /><div className="flex flex-col"><span className="text-[10px] font-bold text-yellow-600 dark:text-yellow-500 uppercase tracking-wider mb-1">Resposta Sugerida</span><span className="text-sm text-slate-700 dark:text-slate-300 font-medium leading-relaxed italic">"{block.content}"</span></div></div>;
+                case 's1':
+                case 's3': return <Spoiler key={block.id} block={block} childrenNodes={block.children?.map(child => renderBlock(child))} />;
+                default: return null;
+            }
+        };
+
+        return <div className="w-full">{blocks.map(block => renderBlock(block))}</div>;
+      };
+
+      // CLASS FEEDBACK FORM
+      const CLASS_TYPES = [
+        { id: 'admin', name: 'Administração e Tecnologia do Fórum', maxScore: 6 },
+        { id: 'mil_sci', name: 'Ciências Militares', maxScore: 5 },
+        { id: 'mil_career', name: 'Carreira Militar', maxScore: 5 },
+        { id: 'practice', name: 'Práticas Militares e Legislação', maxScore: 4 },
+      ];
+
+      const ClassFeedbackForm = ({ professor, initialClassId, initialStartTime, initialStudent }) => {
+        const [selectedType, setSelectedType] = useState(CLASS_TYPES[0]);
+        const [isAdminActivity, setIsAdminActivity] = useState(false);
+        const [activitySubmitted, setActivitySubmitted] = useState('Sim');
+        const [students, setStudents] = useState('');
+        const [verdict, setVerdict] = useState('Aprovado');
+        const [score, setScore] = useState('');
+        const [comments, setComments] = useState('');
+        const [copied, setCopied] = useState(false);
+        const [startTime, setStartTime] = useState(new Date());
+
+        useEffect(() => {
+            if (initialClassId) {
+                const type = CLASS_TYPES.find(t => t.id === initialClassId) || CLASS_TYPES[0];
+                setSelectedType(type);
+                if (initialClassId === 'admin_activity') {
+                    const adminType = CLASS_TYPES.find(t => t.id === 'admin');
+                    if (adminType) setSelectedType(adminType);
+                    setIsAdminActivity(true);
+                }
+            }
+            if (initialStartTime) setStartTime(initialStartTime);
+            else setStartTime(new Date());
+            if (initialStudent) setStudents(initialStudent);
+        }, [initialClassId, initialStartTime, initialStudent]);
+
+        const formatReport = () => {
+            const scoreLine = isAdminActivity ? `Atividade Enviada: ${activitySubmitted.toUpperCase()}` : `Pontuação: ${score}/${selectedType.maxScore}`;
+            const typeName = isAdminActivity ? `${selectedType.name} (Atividade)` : selectedType.name;
+            return `
+RELATÓRIO DE AULA - ${typeName}
+----------------------------------------
+Professor: ${professor.nickname}
+Alunos: ${students}
+Início: ${startTime.toLocaleString('pt-BR')}
+Fim: ${new Date().toLocaleString('pt-BR')}
+
+Veredito: ${verdict.toUpperCase()}
+${scoreLine}
+
+Comentários:
+${comments}
+----------------------------------------`.trim();
+        };
+
+        const handleCopyReport = () => {
+            navigator.clipboard.writeText(formatReport());
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        };
+
+        const formatDateTimeForInput = (date) => {
+            const d = new Date(date);
+            d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+            return d.toISOString().slice(0, 16);
+        };
+
+        return (
+            <div className="animate-fade-in space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h3 className="text-2xl font-bold text-slate-800 dark:text-white">Relatório</h3>
+                        <p className="text-slate-500">Preenchimento de dados da aula.</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div className="lg:col-span-8 bg-white dark:bg-dark-surface rounded-3xl p-8">
+                        <div className="space-y-3 mb-8">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Tipo de Aula</label>
+                            <div className="relative">
+                                <select value={selectedType.id} onChange={(e) => {
+                                    const newType = CLASS_TYPES.find(t => t.id === e.target.value);
+                                    if (newType) {
+                                        setSelectedType(newType);
+                                        setScore('');
+                                        if (newType.id !== 'admin') setIsAdminActivity(false);
+                                    }
+                                }} className="w-full appearance-none px-5 py-4 bg-slate-50 dark:bg-dark-element rounded-2xl focus:bg-slate-100 dark:focus:bg-dark-hover outline-none transition-all dark:text-white font-medium text-slate-700 cursor-pointer">
+                                    {CLASS_TYPES.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                </select>
+                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                            </div>
+                        </div>
+                        {selectedType.id === 'admin' && (
+                            <div className="mb-8 p-4 bg-slate-50 dark:bg-dark-element rounded-2xl flex items-center justify-between">
+                                <span className="text-sm font-bold text-slate-700 dark:text-slate-300">Tipo de Registro</span>
+                                <div className="flex bg-white dark:bg-dark-surface p-1 rounded-xl">
+                                    <button onClick={() => setIsAdminActivity(false)} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${!isAdminActivity ? 'bg-brand text-white shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'}`}>Registro de Aula</button>
+                                    <button onClick={() => setIsAdminActivity(true)} className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${isAdminActivity ? 'bg-brand text-white shadow-md' : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200'}`}>Registro de Atividade</button>
+                                </div>
+                            </div>
+                        )}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Alunos Participantes</label>
+                                <input type="text" value={students} onChange={(e) => setStudents(e.target.value)} className="w-full px-5 py-4 bg-slate-50 dark:bg-dark-element rounded-2xl focus:bg-slate-100 dark:focus:bg-dark-hover outline-none transition-all dark:text-white text-slate-700 font-medium" placeholder="Ex: Nick1, Nick2..." />
+                            </div>
+                            <div className="space-y-3">
+                                {isAdminActivity ? (
+                                    <>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Enviou Atividade?</label>
+                                        <div className="relative">
+                                            <select value={activitySubmitted} onChange={(e) => setActivitySubmitted(e.target.value)} className="w-full appearance-none px-5 py-4 bg-slate-50 dark:bg-dark-element rounded-2xl focus:bg-slate-100 dark:focus:bg-dark-hover outline-none transition-all dark:text-white font-bold text-slate-700 cursor-pointer">
+                                                <option value="Sim">Sim</option>
+                                                <option value="Não">Não</option>
+                                            </select>
+                                            <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Pontuação (Max: {selectedType.maxScore})</label>
+                                        <div className="relative">
+                                            <input type="number" value={score} onChange={(e) => {
+                                                const val = e.target.value;
+                                                if (val === '' || (/^\d+$/.test(val) && parseInt(val, 10) <= selectedType.maxScore)) setScore(val);
+                                            }} min="0" max={selectedType.maxScore} className="w-full px-5 py-4 bg-slate-50 dark:bg-dark-element rounded-2xl focus:bg-slate-100 dark:focus:bg-dark-hover outline-none transition-all dark:text-white font-bold text-slate-700" placeholder="0" />
+                                            <Calculator className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={18} />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                        <div className="space-y-3">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Observações</label>
+                            <textarea value={comments} onChange={(e) => setComments(e.target.value)} rows={4} className="w-full p-5 bg-slate-50 dark:bg-dark-element rounded-2xl focus:bg-slate-100 dark:focus:bg-dark-hover outline-none transition-all dark:text-white resize-none text-slate-700 leading-relaxed font-medium" placeholder="Observações pertinentes sobre a aula ou alunos..." />
+                        </div>
+                    </div>
+                    <div className="lg:col-span-4 space-y-6">
+                        <div className="bg-white dark:bg-dark-surface rounded-3xl p-6">
+                            <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Veredito</label>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button onClick={() => setVerdict('Aprovado')} className={`py-4 rounded-xl font-bold text-sm transition-all ${verdict === 'Aprovado' ? 'bg-brand text-white' : 'bg-slate-50 dark:bg-dark-element text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-hover'}`}>Aprovado</button>
+                                <button onClick={() => setVerdict('Reprovado')} className={`py-4 rounded-xl font-bold text-sm transition-all ${verdict === 'Reprovado' ? 'bg-red-500 text-white' : 'bg-slate-50 dark:bg-dark-element text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-hover'}`}>Reprovado</button>
+                            </div>
+                        </div>
+                        <div className="bg-white dark:bg-dark-surface rounded-3xl p-6 space-y-4">
+                            <div className="flex items-center justify-between"><span className="text-xs font-bold text-slate-400 uppercase">Professor</span><span className="font-bold text-slate-700 dark:text-white text-sm bg-slate-50 dark:bg-dark-element px-3 py-1 rounded-lg">{professor.nickname}</span></div>
+                            <div className="flex flex-col gap-1"><span className="text-xs font-bold text-slate-400 uppercase">Início</span><div className="relative"><input type="datetime-local" value={formatDateTimeForInput(startTime)} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full font-bold text-slate-700 dark:text-white text-sm bg-slate-50 dark:bg-dark-element px-3 py-2 rounded-lg outline-none focus:ring-2 focus:ring-brand/50 transition-all appearance-none cursor-pointer" /></div></div>
+                        </div>
+                        <button onClick={handleCopyReport} className="w-full py-5 bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-bold rounded-3xl hover:opacity-90 transition-all flex items-center justify-center gap-2">{copied ? <Check size={20} className="text-brand" /> : <Copy size={20} />}{copied ? 'Copiado!' : 'Copiar Relatório'}</button>
+                    </div>
+                </div>
+            </div>
+        );
+      };
+
+      // MAIN APP
+      const App = () => {
+        const [isLoggedIn, setIsLoggedIn] = useState(false);
+        const [currentUser, setCurrentUser] = useState(null);
+        const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+        const [nicknameInput, setNicknameInput] = useState('');
+        const [loginLoading, setLoginLoading] = useState(false);
+        const [loginError, setLoginError] = useState('');
+        const [currentView, setCurrentView] = useState('home');
+        const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+        const [expandedFolders, setExpandedFolders] = useState(new Set(['professores']));
+        const [selectedClass, setSelectedClass] = useState(null);
+        const [classContent, setClassContent] = useState([]);
+        const [contentLoading, setContentLoading] = useState(false);
+        const [classStartTime, setClassStartTime] = useState(null);
+        const [reportData, setReportData] = useState(null);
+
+        useEffect(() => {
+            const root = document.getElementById('root');
+            if (theme === 'dark') root.classList.add('dark');
+            else root.classList.remove('dark');
+            localStorage.setItem('theme', theme);
+        }, [theme]);
+
+        const handleLogin = async (e) => {
+            e.preventDefault();
+            if (!nicknameInput.trim()) return;
+            setLoginLoading(true);
+            setLoginError('');
+            try {
+                const user = await loginUser(nicknameInput);
+                if (user) {
+                    setCurrentUser(user);
+                    setIsLoggedIn(true);
+                } else {
+                    setLoginError('Nickname não encontrado no registro.');
+                }
+            } catch (err) {
+                setLoginError('Erro ao conectar com a planilha. Tente novamente.');
+            } finally {
+                setLoginLoading(false);
+            }
+        };
+
+        const navigateTo = (view) => {
+            setCurrentView(view);
+            if (view !== 'reports') setReportData(null);
+            setSelectedClass(null); 
+            setMobileMenuOpen(false);
+        };
+
+        const openClass = async (cls) => {
+            setSelectedClass(cls);
+            setClassStartTime(new Date());
+            setContentLoading(true);
+            setClassContent([]);
+            try {
+                const rawRows = await fetchClassContent(cls.gid);
+                const parsedBlocks = parseRowsToBlocks(rawRows);
+                setClassContent(parsedBlocks);
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao carregar conteúdo da aula.');
+            } finally {
+                setContentLoading(false);
+            }
+        };
+
+        const handlePostReport = () => {
+            if (selectedClass && classStartTime) {
+                setReportData({ classId: selectedClass.id, startTime: classStartTime });
+                setCurrentView('reports');
+                setSelectedClass(null);
+            }
+        };
+
+        const SIDEBAR_STRUCTURE = [
+            {
+                id: 'professores', label: 'Professores', minLevel: 1, items: [
+                    { id: 'classes', label: 'Aulas', icon: BookOpen },
+                    { id: 'reports', label: 'Formulário de Postagem', icon: FileText },
+                    { id: 'history', label: 'Relatórios de Aulas', icon: ClipboardList },
+                    { id: 'correction', label: 'Ferramenta de Correção', icon: PenTool },
+                    { id: 'manual_prof', label: 'Manual de Função', icon: Book },
+                ]
+            },
+            {
+                id: 'avaliadores', label: 'Avaliadores', minLevel: 2, items: [
+                    { id: 'evaluations', label: 'Avaliações', icon: Scale },
+                    { id: 'eval_reports', label: 'Formulário de Postagem', icon: FileText },
+                    { id: 'eval_history', label: 'Relatório de Avaliações', icon: ClipboardList },
+                    { id: 'manual_eval', label: 'Manual de Função', icon: Book },
+                ]
+            },
+            {
+                id: 'fiscalizadores', label: 'Fiscalizadores', minLevel: 3, items: [
+                    { id: 'eligibility', label: 'Verificação de Elegibilidade', icon: Search },
+                    { id: 'audit_reports', label: 'Formulário de Postagem', icon: FileText },
+                    { id: 'audit_history', label: 'Relatório de Fiscalizações', icon: ClipboardList },
+                    { id: 'manual_audit', label: 'Manual de Funções', icon: Book },
+                ]
+            }
+        ];
+
+        const getRoleLevel = (role) => {
+            const r = role.toLowerCase();
+            if (['líder', 'lider', 'vice-líder', 'vice-lider', 'conselheiro', 'estagiário', 'estagiario'].some(x => r.includes(x))) return 4;
+            if (r.includes('fiscalizador')) return 3;
+            if (r.includes('avaliador')) return 2;
+            return 1; 
+        };
+
+        const Sidebar = () => {
+            const userLevel = currentUser ? getRoleLevel(currentUser.role) : 0;
+            return (
+                <div className="flex flex-col w-full h-full">
+                    <div className="px-3 pt-4 pb-2">
+                        <button onClick={() => navigateTo('home')} className={`flex items-center w-full px-4 py-3 rounded-2xl transition-all font-semibold text-sm ${currentView === 'home' ? 'bg-brand text-white' : 'text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-dark-hover'}`}>
+                            <LayoutDashboard size={20} className={currentView === 'home' ? 'text-white' : 'text-slate-400'} /><span className="ml-3">Início</span>
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto px-3 space-y-6 mt-2">
+                        {SIDEBAR_STRUCTURE.map(folder => {
+                            if (userLevel < folder.minLevel) return null;
+                            const isOpen = expandedFolders.has(folder.id);
+                            return (
+                                <div key={folder.id}>
+                                    <button onClick={() => setExpandedFolders(prev => { const next = new Set(prev); if (next.has(folder.id)) next.delete(folder.id); else next.add(folder.id); return next; })} className="flex items-center justify-between w-full px-4 mb-2 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                                        <span>{folder.label}</span>{isOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                    </button>
+                                    {isOpen && <div className="space-y-1">{folder.items.map(item => (
+                                        <button key={item.id} onClick={() => navigateTo(item.id)} className={`flex items-center w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${currentView === item.id ? 'bg-brand/10 text-brand dark:bg-brand/20' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-hover'}`}>
+                                            <item.icon size={18} className={currentView === item.id ? 'text-brand' : 'opacity-70'} /><span className="ml-3">{item.label}</span>
+                                        </button>
+                                    ))}</div>}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="p-4 mt-auto space-y-2">
+                        <button onClick={() => { setIsLoggedIn(false); setCurrentUser(null); }} className="flex items-center justify-center gap-3 w-full py-3 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-xl transition-all text-sm font-medium"><LogOut size={18} /><span>Sair</span></button>
+                        <button onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')} className="flex items-center justify-center gap-3 w-full py-3 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 bg-slate-50 dark:bg-dark-element dark:text-slate-400 rounded-xl transition-all text-sm font-medium">{theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}<span>Alternar Tema</span></button>
+                    </div>
+                </div>
+            );
+        };
+
+        if (!isLoggedIn) {
+            return (
+                <div className="min-h-screen w-full flex items-center justify-center p-4 relative overflow-hidden">
+                    <div className="max-w-md w-full bg-white dark:bg-dark-surface rounded-3xl p-8 relative z-10 animate-fade-in shadow-2xl">
+                        <div className="text-center mb-10"><div className="flex flex-col items-center justify-center gap-4 mb-2"><img src="https://i.imgur.com/ScdmxL5.png" alt="Logo" className="h-16 object-contain" /></div><p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-4">Painel Administrativo</p></div>
+                        <form onSubmit={handleLogin} className="space-y-6">
+                            <div className="space-y-2"><label className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Identificação</label><div className="relative group"><Folder className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} /><input type="text" value={nicknameInput} onChange={(e) => setNicknameInput(e.target.value)} className="w-full pl-12 pr-4 py-4 rounded-xl bg-slate-50 dark:bg-dark-element focus:bg-slate-100 dark:focus:bg-dark-hover focus:outline-none transition-all font-medium text-slate-800 dark:text-white placeholder-slate-300 text-sm" placeholder="Seu Nickname" /></div></div>
+                            {loginError && <div className="p-4 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 text-xs font-medium rounded-xl flex items-center gap-3 animate-fade-in"><ShieldCheck size={16} /><span>{loginError}</span></div>}
+                            <button type="submit" disabled={loginLoading} className="w-full bg-brand hover:bg-brand-hover text-white font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-3 disabled:opacity-70">{loginLoading ? <Loader2 className="animate-spin" size={18} /> : <LogIn size={18} />}{loginLoading ? 'Verificando...' : 'Acessar Sistema'}</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="flex min-h-screen w-full font-sans transition-colors duration-300">
+                <aside className="w-72 bg-white dark:bg-dark-surface fixed h-full z-[999] hidden lg:flex flex-col border-r border-slate-200/50 dark:border-white/5">
+                    <div className="h-24 flex items-center gap-3 px-8 shrink-0"><img src="https://i.imgur.com/ScdmxL5.png" alt="Logo" className="w-8 h-auto object-contain" /><span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">Painel</span></div>
+                    <div className="flex-1 min-h-0"><Sidebar /></div>
+                </aside>
+                {mobileMenuOpen && <div className="fixed inset-0 z-[1000] lg:hidden"><div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div><div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-dark-surface flex flex-col animate-fade-in shadow-2xl"><div className="h-20 flex items-center justify-between px-6 shrink-0"><span className="font-bold">Menu</span><button onClick={() => setMobileMenuOpen(false)}><X size={20} /></button></div><div className="flex-1 overflow-y-auto py-4"><Sidebar /></div></div></div>}
+                <div className="flex-1 lg:ml-72 flex flex-col min-h-screen w-full">
+                    <Navbar user={currentUser} onMenuClick={() => setMobileMenuOpen(true)} onLogout={() => {setIsLoggedIn(false); setCurrentUser(null);}} title={currentView === 'home' ? 'Início' : 'Painel'} />
+                    <main className="flex-1 p-6 lg:p-10 max-w-[1600px] w-full mx-auto">
+                        {currentView === 'home' && (
+                            <div className="animate-fade-in">
+                                <div className="rounded-3xl p-8 lg:p-12 relative overflow-hidden group min-h-[300px] flex flex-col justify-center">
+                                    <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-700 group-hover:scale-105"></div>
+                                    <div className="absolute inset-0 bg-slate-900/80"></div>
+                                    <div className="relative z-10 max-w-2xl"><h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Olá, {currentUser?.nickname}</h2><p className="text-slate-200 text-sm lg:text-base leading-relaxed mb-8 opacity-90">Acesse as pastas no menu lateral para gerenciar suas atividades conforme seu cargo ({currentUser?.role}).</p></div>
+                                </div>
+                            </div>
+                        )}
+                        {currentView === 'classes' && !selectedClass && (
+                             <div className="animate-fade-in"><div className="mb-6"><h2 className="text-2xl font-bold text-slate-800 dark:text-white">Catálogo de Aulas</h2><p className="text-slate-500 text-sm">Selecione uma categoria para iniciar.</p></div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{CLASSES.map(cls => (
+                                    <button key={cls.id} onClick={() => openClass(cls)} className="group relative bg-white dark:bg-dark-surface p-6 rounded-3xl text-left flex items-start gap-5 w-full hover:bg-white dark:hover:bg-dark-hover hover:scale-[1.01] transition-all duration-200">
+                                        <div className="w-14 h-14 shrink-0 rounded-2xl bg-brand/10 dark:bg-dark-element text-brand flex items-center justify-center group-hover:bg-brand group-hover:text-white transition-colors duration-300"><BookOpen size={28} /></div>
+                                        <div className="flex-1 flex flex-col h-full min-w-0"><div className="flex-1"><h3 className="text-base font-bold text-slate-800 dark:text-white leading-tight mb-2 truncate">{cls.name}</h3><p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed line-clamp-2">{cls.description}</p></div><div className="mt-4 pt-4 flex items-center justify-end"><div className="flex items-center text-xs font-bold text-slate-300 group-hover:text-brand transition-colors">Abrir <ChevronRight size={14} className="ml-1" /></div></div></div>
+                                    </button>
+                                ))}</div>
+                             </div>
+                        )}
+                        {currentView === 'classes' && selectedClass && (
+                            <div className="animate-fade-in pb-10">
+                                <div className="flex items-center justify-between mb-6"><button onClick={() => {setSelectedClass(null); setClassStartTime(null);}} className="flex items-center gap-2 text-slate-500 hover:text-brand transition-colors font-medium text-sm"><ArrowLeft size={16} /> Voltar</button><button onClick={handlePostReport} className="flex items-center gap-2 px-5 py-2.5 bg-brand text-white text-sm font-bold rounded-xl hover:bg-brand-hover transition-all"><Send size={16} /> Concluir Aula</button></div>
+                                {contentLoading ? <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-dark-surface rounded-3xl"><Loader2 className="animate-spin text-brand mb-4" size={40} /><p className="text-slate-400 font-medium animate-pulse text-sm uppercase tracking-wide">Carregando script...</p></div> : <div className="bg-white dark:bg-dark-surface rounded-3xl p-6 lg:p-10 min-h-[500px]">{classContent.length > 0 ? <ContentRenderer blocks={classContent} /> : <div className="text-center py-20 text-slate-400 flex flex-col items-center"><BookOpen size={48} className="mb-4 opacity-20" /><p>Conteúdo indisponível no momento.</p></div>}</div>}
+                            </div>
+                        )}
+                        {currentView === 'reports' && currentUser && <div className="animate-fade-in max-w-4xl mx-auto"><ClassFeedbackForm professor={currentUser} initialClassId={reportData?.classId} initialStartTime={reportData?.startTime} initialStudent={reportData?.studentNick} /></div>}
+                        {!['home', 'classes', 'reports'].includes(currentView) && <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in"><div className="bg-white dark:bg-dark-surface p-10 rounded-full mb-6"><ShieldAlert size={48} className="text-slate-300" /></div><h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Em Desenvolvimento</h3><p className="text-slate-500 max-w-md">Esta ferramenta ({currentView}) ainda está sendo implementada no sistema.</p></div>}
+                    </main>
+                </div>
+            </div>
+        );
+      };
+
+      const root = createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
